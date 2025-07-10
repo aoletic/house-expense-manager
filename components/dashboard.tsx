@@ -39,15 +39,24 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [user, setUser] = useState<any>(null)
-  const supabase = createClientComponentClient()
   const router = useRouter()
 
+  // Check for required environment variables first
+  const hasRequiredEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Only create supabase client if environment variables are available
+  const supabase = hasRequiredEnvVars ? createClientComponentClient() : null
+
   useEffect(() => {
-    getUser()
-    fetchExpenses()
-  }, [selectedMonth])
+    if (supabase) {
+      getUser()
+      fetchExpenses()
+    }
+  }, [selectedMonth, supabase])
 
   const getUser = async () => {
+    if (!supabase) return
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -55,6 +64,8 @@ export default function Dashboard() {
   }
 
   const fetchExpenses = async () => {
+    if (!supabase) return
+
     setLoading(true)
     const { data, error } = await supabase
       .from("expenses")
@@ -72,8 +83,28 @@ export default function Dashboard() {
   }
 
   const handleSignOut = async () => {
+    if (!supabase) return
+
     await supabase.auth.signOut()
     router.push("/auth/login")
+  }
+
+  // Show configuration error if environment variables are missing
+  if (!hasRequiredEnvVars) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-xl font-bold text-red-600 mb-4">Configuration Error</h2>
+            <p className="text-gray-600 mb-4">Missing Supabase environment variables. Please configure:</p>
+            <ul className="text-sm text-left text-gray-500 space-y-1">
+              <li>• NEXT_PUBLIC_SUPABASE_URL</li>
+              <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
@@ -212,7 +243,9 @@ export default function Dashboard() {
         </Card>
       </main>
 
-      <AddExpenseDialog open={showAddDialog} onOpenChange={setShowAddDialog} onExpenseAdded={fetchExpenses} />
+      {supabase && (
+        <AddExpenseDialog open={showAddDialog} onOpenChange={setShowAddDialog} onExpenseAdded={fetchExpenses} />
+      )}
     </div>
   )
 }

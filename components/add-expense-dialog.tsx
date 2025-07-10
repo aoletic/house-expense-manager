@@ -31,10 +31,21 @@ export default function AddExpenseDialog({ open, onOpenChange, onExpenseAdded }:
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const supabase = createClientComponentClient()
+
+  // Check for required environment variables first
+  const hasRequiredEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Only create supabase client if environment variables are available
+  const supabase = hasRequiredEnvVars ? createClientComponentClient() : null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!supabase) {
+      setError("Application is not properly configured. Please contact support.")
+      return
+    }
+
     setLoading(true)
     setError("")
 
@@ -137,7 +148,7 @@ export default function AddExpenseDialog({ open, onOpenChange, onExpenseAdded }:
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !supabase}>
               {loading ? "Adding..." : "Add Expense"}
             </Button>
           </DialogFooter>

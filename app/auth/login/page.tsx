@@ -2,6 +2,9 @@
 
 import type React from "react"
 
+// Force dynamic rendering to prevent prerendering issues
+export const dynamic = "force-dynamic"
+
 import { useState } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useRouter } from "next/navigation"
@@ -13,16 +16,27 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Home, Mail, Lock } from "lucide-react"
 
-export default function Login() {
+const Login = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
-  const supabase = createClientComponentClient()
+
+  // Check for required environment variables first
+  const hasRequiredEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Only create supabase client if environment variables are available
+  const supabase = hasRequiredEnvVars ? createClientComponentClient() : null
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!supabase) {
+      setError("Application is not properly configured. Please contact support.")
+      return
+    }
+
     setLoading(true)
     setError("")
 
@@ -38,6 +52,24 @@ export default function Login() {
       router.refresh()
     }
     setLoading(false)
+  }
+
+  // Show configuration error if environment variables are missing
+  if (!hasRequiredEnvVars) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-xl font-bold text-red-600 mb-4">Configuration Error</h2>
+            <p className="text-gray-600 mb-4">Missing Supabase environment variables. Please configure:</p>
+            <ul className="text-sm text-left text-gray-500 space-y-1">
+              <li>• NEXT_PUBLIC_SUPABASE_URL</li>
+              <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -104,3 +136,5 @@ export default function Login() {
     </div>
   )
 }
+
+export default Login
