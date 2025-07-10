@@ -80,6 +80,14 @@ const Login = () => {
     )
   }
 
+	// Temporary debug - remove after testing
+if (typeof window !== 'undefined') {
+  console.log('Client-side env check:', {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'Missing'
+  })
+}
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
