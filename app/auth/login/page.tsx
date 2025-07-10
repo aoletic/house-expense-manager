@@ -26,6 +26,14 @@ const Login = () => {
   // Check for required environment variables first
   const hasRequiredEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  // Debug logging (remove this after testing)
+  console.log("Environment check:", {
+    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Set" : "Missing",
+    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Missing",
+  })
+
   // Only create supabase client if environment variables are available
   const supabase = hasRequiredEnvVars ? createClientComponentClient() : null
 
